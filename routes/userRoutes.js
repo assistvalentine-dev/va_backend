@@ -140,7 +140,6 @@ router.post('/create', userValidationRules, async (req, res) => {
       data: {
         userId: user._id,
         email: user.email,
-        paymentStatus: user.paymentStatus,
       },
     });
 
