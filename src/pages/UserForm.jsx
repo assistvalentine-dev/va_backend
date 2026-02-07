@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUser } from '../utils/api';
+import { toast } from "react-toastify"; 
 
 const UserForm = () => {
   const navigate = useNavigate();
@@ -84,11 +85,17 @@ const UserForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading) return; // Prevent multiple submissions
+
     if (!validateForm()) {
       return;
     }
 
+
     setLoading(true);
+    toast.info("Submitting your details..."); 
+
+
     try {
       const response = await createUser({
         ...formData,
@@ -96,6 +103,7 @@ const UserForm = () => {
       });
 
     if (response.success) {
+      toast.success("Email sent successfully!"); 
       const { userId, email, paymentStatus, verifiedId } = response.data;
       sessionStorage.setItem('userId', userId);
 
@@ -118,6 +126,7 @@ const UserForm = () => {
       }
     }
  else {
+      toast.error(response.message || "Failed to create user"); 
       setErrors({ submit: response.message || 'Failed to create user ' });
     }
     } catch (error) {
@@ -125,20 +134,31 @@ const UserForm = () => {
         const apiErrors = {};
         error.response.data.errors.forEach((err) => {
           apiErrors[err.path || err.param] = err.msg;
+          toast.error(err.msg);        // ✅ show each validation error as toast
         });
         setErrors(apiErrors);
       } else {
-        setErrors({
-          submit: error.response?.data?.message || 'An error occurred. Please try again.',
-        });
+        const msg = error.response?.data?.message || "Server error. Please try again.";
+        toast.error(msg);             // ✅ always toast backend message
+        setErrors({ submit: msg });
       }
-    } finally {
-      setLoading(false);
     }
+  finally {    setLoading(false);}
   };
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="min-h-screen py-12 px-4 relative">
+       {/* ================== BLOCKING OVERLAY ================== */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-xl border border-gray-700 text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+            <p className="text-white font-semibold">Processing your request...</p>
+            <p className="text-gray-400 text-sm mt-1">Please don’t refresh the page</p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Tell Us About Yourself</h1>

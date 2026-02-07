@@ -6,9 +6,13 @@ import Success from './pages/Success';
 import VerifyOtp from './pages/VerifyOtp';
 import ScrollToTop from './hooks/ScrollToTop.jsx';
 import FreeSuccess from './pages/FreeSuccess.jsx';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 function App() {
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <ScrollToTop />
       <Routes>
@@ -20,6 +24,8 @@ function App() {
         <Route path="/free-success" element={<FreeSuccess />} />
       </Routes>
     </div>
+    <ToastContainer position="top-right" autoClose={3000} />
+    </>
   );
 }
 
