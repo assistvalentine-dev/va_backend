@@ -1,7 +1,8 @@
 import nodemailer from "nodemailer";
 
-
 export const sendVerificationEmail = async (email, otp) => {
+
+  try {
   // transporter (using Gmail here, but you can use any SMTP service)
     const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -73,5 +74,12 @@ export const sendVerificationEmail = async (email, otp) => {
     };
 
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    return true; // Email sent successfully
+  
+  } catch (error) {
+    console.error("Email sending error:", error);
+    return false; // Failed to send email
+  }
+
 };

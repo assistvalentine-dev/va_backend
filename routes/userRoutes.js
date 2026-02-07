@@ -83,6 +83,8 @@ router.post('/create', userValidationRules, async (req, res) => {
 
       const emailSent = await sendVerificationEmail(existingUser.email, otp);
 
+      console.log(` (email sent: ${emailSent})`);
+
       if (!emailSent) {
         console.warn("Failed to send verification email for existing user:", existingUser.email);
       }
@@ -157,7 +159,7 @@ router.post('/create', userValidationRules, async (req, res) => {
 
     // send OTP to user's email
     const emailSent = await sendVerificationEmail(email, otp);
-
+    console.log(` (email sent: ${emailSent})`);
     if (!emailSent) {
       console.warn("Failed to send verification email for user:", email);
     }
@@ -217,33 +219,63 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 router.post('/resend-otp', async (req, res) => {
-  const { email } = req.body;
-  if (!email) { 
-    return res.status(400).json({
-      success: false,
-      message: 'Email is required',
-    });
-  }
-  const user =  await User.findOne({
-    email,
-  });
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
-  } else {
+  try {
+    const { email } = req.body;
+    console.log('Resend OTP request received for email:', email);
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // ⏳ Cooldown check (60 seconds)
+    if (user.otpExpiresAt && new Date() < new Date(user.otpExpiresAt - 9 * 60 * 1000)) {
+      return res.status(429).json({
+        success: false,
+        message: 'Please wait before requesting a new OTP',
+      });
+    }
+
+    // Generate new OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.otp = otp;
-    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    // resend OTP email
+    // Send email
     const emailSent = await sendVerificationEmail(email, otp);
+
+    console.log(`(email sent: ${emailSent})`);
+
     if (emailSent) {
-      return res.status(200).json({ success: true, message: 'OTP resent successfully' });
+      return res.status(200).json({
+        success: true,
+        message: 'New OTP sent successfully',
+      });
     }
-    return res.status(500).json({ success: false, message: 'Failed to resend OTP' });
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP email',
+    });
+
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
   }
 });
 
