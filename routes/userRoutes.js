@@ -131,20 +131,23 @@ router.post('/create', userValidationRules, async (req, res) => {
 // ================= VERIFY OTP =================
 router.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
+
   if (!email || !otp) {
     return res.status(400).json({ success: false, message: 'Email and OTP are required' });
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email })
+    .select('+otp +otpExpiresAt +otpAttempts');
+
   if (!user) {
     return res.status(404).json({ success: false, message: 'User not found' });
   }
 
-  // Block brute force after 5 tries
-  if (user.otpAttempts >= 5) {
+  const currentAttempts = Number(user.otpAttempts) || 0;
+  if (currentAttempts >= 5) {
     return res.status(429).json({
       success: false,
-      message: "Too many attempts. Please request a new OTP."
+      message: 'Too many attempts. Please request a new OTP.',
     });
   }
 
@@ -160,23 +163,23 @@ router.post('/verify-otp', async (req, res) => {
       data: {
         userId: user._id,
         email: user.email,
-        paymentStatus: user.paymentStatus
-      }
+        paymentStatus: user.paymentStatus,
+      },
     });
   }
 
-  // Wrong OTP → increment attempts
-  user.otpAttempts += 1;
+  user.otpAttempts = currentAttempts + 1;
   await user.save();
 
   return res.status(400).json({
     success: false,
     message:
       user.otpExpiresAt < new Date()
-        ? "OTP expired. Please request a new one."
-        : "Invalid OTP",
+        ? 'OTP expired. Please request a new one.'
+        : 'Invalid OTP',
   });
 });
+
 
 // ================= RESEND OTP =================
 router.post('/resend-otp', async (req, res) => {

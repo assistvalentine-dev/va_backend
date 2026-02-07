@@ -129,9 +129,8 @@ const userSchema = new mongoose.Schema(
 );
 
 // Indexes
-userSchema.index({ email: 1 });
-userSchema.index({ paymentStatus: 1 });
-userSchema.index({ verifiedId: 1 });
+// Indexes are declared inline on the fields (via `index: true`),
+// so avoid duplicating them here to prevent Mongoose duplicate-index warnings.
 
 const User = mongoose.model('User', userSchema);
 export default User;
