@@ -14,8 +14,8 @@ const userValidationRules = [
   body('college').trim().isLength({ min: 1, max: 100 }),
   body('email').isEmail().normalizeEmail(),
   body('relationshipGoal').isIn(['Casual', 'Serious', 'Marriage']),
-  body('description').trim().isLength({ min: 1, max: 100 }),
-  body('preferences').trim().isLength({ min: 1, max: 100 }),
+  body('description').trim().isLength({ min: 1, max: 1000 }),
+  body('preferences').trim().isLength({ min: 1, max: 1000 }),
   body('interests').isIn(['Yes', 'No']),
 ];
 
@@ -225,3 +225,4 @@ router.post('/resend-otp', async (req, res) => {
 });
 
 export default router;
+
