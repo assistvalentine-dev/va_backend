@@ -96,7 +96,7 @@ router.post('/create', userValidationRules, async (req, res) => {
       paymentStatus: { $in: ["PAID", "FREE"] }
     });
 
-    const paymentStatus = filledSlots < 5 ? "FREE" : "PENDING";
+    const paymentStatus = filledSlots < 50 ? "FREE" : "PENDING";
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -225,4 +225,5 @@ router.post('/resend-otp', async (req, res) => {
 });
 
 export default router;
+
 
